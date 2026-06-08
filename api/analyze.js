@@ -116,9 +116,8 @@ export default async function handler(req) {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
-      // Restrict to same origin — tighten this to your actual domain in production
       'Access-Control-Allow-Origin': '*',
     },
   });
       }
-      
+  
