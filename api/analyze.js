@@ -47,7 +47,7 @@ export default async function handler(req) {
   let channel, complaint;
   try {
     const body = await req.json();
-    channel = body.channel;
+    channel = body.channel || 'support_ticket';
     complaint = body.complaint;
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
@@ -80,16 +80,16 @@ export default async function handler(req) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'anthropic-version': '2024-01-01',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 2000,
         system: SYSTEM_PROMPT,
         messages: [
           {
             role: 'user',
-            content: `Source channel: ${channel}\n\nComplaint:\n${complaint}`,
+            content: `Source channel: ${channel}\n\nComplaint:\n${complaint.trim()}`,
           },
         ],
       }),
@@ -119,5 +119,5 @@ export default async function handler(req) {
       'Access-Control-Allow-Origin': '*',
     },
   });
-      }
+                                        }
   
