@@ -80,7 +80,7 @@ export default async function handler(req) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2024-01-01',
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
@@ -89,8 +89,13 @@ export default async function handler(req) {
         messages: [
           {
             role: 'user',
-            content: `Source channel: ${channel}\n\nComplaint:\n${complaint.trim()}`,
-          },
+            content: [
+              {
+                type: 'text',
+                text: `Source channel: ${channel}\n\nComplaint:\n${complaint.trim()}`
+              }
+            ]
+          }
         ],
       }),
     });
@@ -119,5 +124,5 @@ export default async function handler(req) {
       'Access-Control-Allow-Origin': '*',
     },
   });
-                                        }
-  
+      }
+                                        
