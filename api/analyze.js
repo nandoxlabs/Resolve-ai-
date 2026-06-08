@@ -1,7 +1,4 @@
 // api/analyze.js — Vercel Edge Function
-// ✅ The API key never leaves the server. It is read from an environment
-//    variable set in the Vercel Dashboard, not from your source code.
-
 export const config = {
   runtime: 'edge',
 };
@@ -43,24 +40,17 @@ export default async function handler(req) {
     });
   }
 
-  // Parse the incoming request body with safety protections
   let channel = 'support_ticket';
-  let complaint = 'Sample customer concern payload testing connection.';
+  let complaint = 'Test fallback concern.';
   
   try {
     const body = await req.json();
-    if (body.channel && typeof body.channel === 'string' && body.channel.trim() !== '') {
-      channel = body.channel.trim();
-    }
-    if (body.complaint && typeof body.complaint === 'string' && body.complaint.trim() !== '') {
-      complaint = body.complaint.trim();
-    }
+    if (body.channel) channel = String(body.channel).trim();
+    if (body.complaint) complaint = String(body.complaint).trim();
   } catch (e) {
-    // Fallback content in case frontend JSON parsing completely fails
-    console.log("Request body fallback activated");
+    console.log("JSON parsing skipped/failed");
   }
 
-  // ✅ API key is read securely from environment — never exposed to the browser
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return new Response(
@@ -69,56 +59,48 @@ export default async function handler(req) {
     );
   }
 
-  // Forward the request to Anthropic
-  let anthropicResponse;
   try {
-    anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
-        system: SYSTEM_PROMPT,
+        max_tokens: 2500,
         messages: [
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Source channel: ${channel}\n\nComplaint:\n${complaint}`
-              }
-            ]
+            content: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint}`
           }
         ],
       }),
     });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return new Response(
+        JSON.stringify({ error: 'Anthropic rejection response', detail: errText }),
+        { status: response.status, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const data = await response.json();
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: 'Failed to reach Anthropic API', detail: err.message }),
+      JSON.stringify({ error: 'Edge connection failed', detail: err.message }),
       { status: 502, headers: { 'Content-Type': 'application/json' } }
     );
   }
-
-  if (!anthropicResponse.ok) {
-    const errText = await anthropicResponse.text();
-    return new Response(
-      JSON.stringify({ error: 'Anthropic API error', detail: errText }),
-      { status: anthropicResponse.status, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  const data = await anthropicResponse.json();
-
-  // Return the Anthropic response directly to the frontend
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
 }
+  
