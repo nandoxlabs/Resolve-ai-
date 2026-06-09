@@ -32,7 +32,6 @@ Return this exact structure:
 }`;
 
 export default async function handler(req) {
-  // Only allow POST
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
@@ -42,7 +41,7 @@ export default async function handler(req) {
 
   let channel = 'support_ticket';
   let complaint = 'Test fallback concern.';
-  
+
   try {
     const body = await req.json();
     if (body.channel) channel = String(body.channel).trim();
@@ -65,16 +64,16 @@ export default async function handler(req) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-6-20250514', // ✅ FIXED: was 'claude-sonnet-4-6'
         max_tokens: 2500,
         messages: [
           {
             role: 'user',
-            content: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint}`
-          }
+            content: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint}`,
+          },
         ],
       }),
     });
@@ -102,5 +101,4 @@ export default async function handler(req) {
       { status: 502, headers: { 'Content-Type': 'application/json' } }
     );
   }
-}
-  
+      }
