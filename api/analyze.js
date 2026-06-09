@@ -1,4 +1,4 @@
-// api/analyze.js — Vercel Edge Function
+// api/analyze.js — Vercel Edge Function (Gemini)
 export const config = {
   runtime: 'edge',
 };
@@ -50,7 +50,7 @@ export default async function handler(req) {
     console.log("JSON parsing skipped/failed");
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return new Response(
       JSON.stringify({ error: 'Server misconfiguration: API key not set' }),
@@ -59,35 +59,47 @@ export default async function handler(req) {
   }
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6-20250514', // ✅ FIXED: was 'claude-sonnet-4-6'
-        max_tokens: 2500,
-        messages: [
-          {
-            role: 'user',
-            content: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint}`,
-          },
-        ],
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint}`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 2500,
+          }
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errText = await response.text();
       return new Response(
-        JSON.stringify({ error: 'Anthropic rejection response', detail: errText }),
+        JSON.stringify({ error: 'Gemini rejection response', detail: errText }),
         { status: response.status, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const data = await response.json();
-    return new Response(JSON.stringify(data), {
+
+    // Extract text from Gemini response
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Clean and parse JSON
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    return new Response(JSON.stringify(parsed), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -101,4 +113,4 @@ export default async function handler(req) {
       { status: 502, headers: { 'Content-Type': 'application/json' } }
     );
   }
-      }
+}
