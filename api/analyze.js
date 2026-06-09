@@ -3,7 +3,7 @@ export const config = {
   runtime: 'edge',
 };
 
-const SYSTEM_PROMPT = `You are ResolveAI, an expert complaint intelligence engine. Analyze the customer complaint and return ONLY a valid JSON object — no markdown, no backticks, no explanation, just pure JSON.
+const SYSTEM_PROMPT = `You are ResolveAI, an expert complaint intelligence engine. Analyze the customer complaint and return ONLY a valid JSON object — no markdown, no backticks, no markdown code block formatting, no explanation, just pure JSON data.
 
 Return this exact structure:
 {
@@ -32,7 +32,7 @@ Return this exact structure:
 }`;
 
 export default async function handler(req) {
-  // Clear out pre-flight CORS requests
+  // Handle Preflight CORS 
   if (req.method === 'OPTIONS') {
     return new Response('OK', {
       status: 200,
@@ -72,18 +72,16 @@ export default async function handler(req) {
     });
   }
 
-  // Look for your Gemini key variable inside Vercel Dashboard Environment
   const apiKey = process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: 'Server configuration error: Gemini key environment variable missing.' }),
+      JSON.stringify({ error: 'Server configuration error: API key missing.' }),
       { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
 
   try {
-    // Native Google Gemini Flash compilation router
-    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const targetUrl = `[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$){apiKey}`;
 
     const response = await fetch(targetUrl, {
       method: 'POST',
@@ -110,26 +108,31 @@ export default async function handler(req) {
 
     if (!response.ok) {
       return new Response(
-        JSON.stringify({ error: 'Gemini API operational rejection', detail: resData }),
+        JSON.stringify({ error: 'Gemini API exception', detail: resData }),
         { status: response.status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    // Remap Gemini response payload shape so your frontend dashboard reads it smoothly
     let textOutput = "";
     try {
-      textOutput = resData.candidates[0].content.parts[0].text;
+      textOutput = resData.candidates[0].content.parts[0].text.trim();
     } catch (e) {
       return new Response(
-        JSON.stringify({ error: 'Malformed response layout data structure returned from engine', detail: resData }),
+        JSON.stringify({ error: 'Malformed response structure text mapping', detail: resData }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    // Parse text string back into structural JSON object to relay to application UI
-    const finalCleanObject = JSON.parse(textOutput);
+    // 🔥 VITAL STEP: Strip out any markdown backticks that cause parsing crashes
+    if (textOutput.startsWith("```")) {
+      textOutput = textOutput.replace(/^
+```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
+    }
 
-    return new Response(JSON.stringify(finalCleanObject), {
+    // Safely parse it down into a clean javascript data object
+    const parsedDataContent = JSON.parse(textOutput);
+
+    return new Response(JSON.stringify(parsedDataContent), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -139,7 +142,7 @@ export default async function handler(req) {
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: 'Internal system gateway exception', detail: err.message }),
+      JSON.stringify({ error: 'Internal edge exception loop tracking', detail: err.message }),
       { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
