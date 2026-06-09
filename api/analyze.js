@@ -1,4 +1,4 @@
-// api/analyze.js — Vercel Edge Function (Gemini)
+// api/analyze.js — Vercel Edge Function
 export const config = {
   runtime: 'edge',
 };
@@ -32,6 +32,18 @@ Return this exact structure:
 }`;
 
 export default async function handler(req) {
+  // Clear out pre-flight CORS requests
+  if (req.method === 'OPTIONS') {
+    return new Response('OK', {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
@@ -40,66 +52,84 @@ export default async function handler(req) {
   }
 
   let channel = 'support_ticket';
-  let complaint = 'Test fallback concern.';
-
+  let complaint = '';
+  
   try {
     const body = await req.json();
-    if (body.channel) channel = String(body.channel).trim();
-    if (body.complaint) complaint = String(body.complaint).trim();
+    channel = body.channel || 'support_ticket';
+    complaint = body.complaint || '';
   } catch (e) {
-    console.log("JSON parsing skipped/failed");
+    return new Response(JSON.stringify({ error: 'Failed to parse JSON body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  if (!complaint.trim()) {
+    return new Response(JSON.stringify({ error: 'Missing complaint text' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  // Look for your Gemini key variable inside Vercel Dashboard Environment
+  const apiKey = process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: 'Server misconfiguration: API key not set' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Server configuration error: Gemini key environment variable missing.' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint}`
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 2500,
+    // Native Google Gemini Flash compilation router
+    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    const response = await fetch(targetUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint.trim()}`
+              }
+            ]
           }
-        }),
-      }
-    );
+        ],
+        generationConfig: {
+          responseMimeType: "application/json"
+        }
+      }),
+    });
+
+    const resData = await response.json();
 
     if (!response.ok) {
-      const errText = await response.text();
       return new Response(
-        JSON.stringify({ error: 'Gemini rejection response', detail: errText }),
-        { status: response.status, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Gemini API operational rejection', detail: resData }),
+        { status: response.status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    const data = await response.json();
+    // Remap Gemini response payload shape so your frontend dashboard reads it smoothly
+    let textOutput = "";
+    try {
+      textOutput = resData.candidates[0].content.parts[0].text;
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: 'Malformed response layout data structure returned from engine', detail: resData }),
+        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
 
-    // Extract text from Gemini response
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Parse text string back into structural JSON object to relay to application UI
+    const finalCleanObject = JSON.parse(textOutput);
 
-    // Clean and parse JSON
-    const clean = rawText.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-
-    return new Response(JSON.stringify(parsed), {
+    return new Response(JSON.stringify(finalCleanObject), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -109,8 +139,9 @@ export default async function handler(req) {
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: 'Edge connection failed', detail: err.message }),
-      { status: 502, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Internal system gateway exception', detail: err.message }),
+      { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
 }
+  
