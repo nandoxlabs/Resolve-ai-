@@ -63,17 +63,17 @@ export default async function handler(req) {
     });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: 'Server error: API key missing in Vercel Environment.' }),
+      JSON.stringify({ error: 'Server error: GEMINI_API_KEY missing in Vercel Environment.' }),
       { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
 
   try {
-    // Switching to stable 1.5-flash to ensure global region compatibility
-    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // ✅ FIXED: Changed v1beta → v1 and gemini-1.5-flash → gemini-1.5-flash-latest
+    const targetUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     const response = await fetch(targetUrl, {
       method: 'POST',
@@ -91,7 +91,6 @@ export default async function handler(req) {
     const resData = await response.json();
 
     if (!response.ok) {
-      // 🔥 EXPOSE GOOGLE'S EXACT ERROR MESSAGE TO THE SCREEN
       const googleErrorReason = resData.error?.message || JSON.stringify(resData);
       return new Response(
         JSON.stringify({ error: `Google Rejected This Key: ${googleErrorReason}` }),
@@ -116,4 +115,4 @@ export default async function handler(req) {
       { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
-}
+        }
