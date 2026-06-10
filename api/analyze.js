@@ -1,4 +1,3 @@
-// api/analyze.js — Vercel Edge Function
 export const config = {
   runtime: 'edge',
 };
@@ -22,9 +21,9 @@ Return this exact structure:
   "recommended_action": "immediate specific action in 1 sentence",
   "assign_to": "Support Team|Manager|Legal|Finance|CEO",
   "resolve_by_hours": number,
-  "draft_response": "A complete, warm, professional, personalized reply. Open by acknowledging the specific problem. Validate frustration without admitting liability. State exact next step and timeline. Close warmly. 80-130 words.",
+  "draft_response": "80-130 word warm professional reply",
   "tasks": [
-    {"title": "action verb + specific task", "assigned_to": "role", "due_in_hours": number, "priority": "urgent|high|normal"}
+    {"title": "task title", "assigned_to": "role", "due_in_hours": 24, "priority": "urgent|high|normal"}
   ],
   "crm_note": "1-sentence CRM record update",
   "sheet_row": "customer | issue_category | urgency | sentiment_score | recommended_action"
@@ -79,7 +78,6 @@ export default async function handler(req) {
   }
 
   try {
-    // ✅ FIXED: v1 stable API + gemini-1.5-flash-latest
     const targetUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     const response = await fetch(targetUrl, {
@@ -91,7 +89,6 @@ export default async function handler(req) {
             text: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint.trim()}`
           }]
         }],
-        // ✅ FIXED: Removed responseMimeType (not supported in v1)
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 2048,
@@ -109,7 +106,6 @@ export default async function handler(req) {
       );
     }
 
-    // ✅ Safely extract text output
     const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!rawText) {
@@ -119,4 +115,34 @@ export default async function handler(req) {
       );
     }
 
-    // ✅ Strip markdown code fences
+    let cleanText = rawText.trim();
+    if (cleanText.startsWith('```')) {
+      cleanText = cleanText
+        .replace(/^```json/, '')
+        .replace(/^```/, '')
+        .replace(/```$/, '')
+        .trim();
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanText);
+    } catch (parseErr) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to parse Gemini response as JSON', raw: cleanText }),
+        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
+    return new Response(JSON.stringify(parsed), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
+
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: 'Edge exception', detail: err.message }),
+      { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+    );
+  }
+}
