@@ -24,15 +24,13 @@ Return this exact structure:
   "resolve_by_hours": number,
   "draft_response": "A complete, warm, professional, personalized reply. Open by acknowledging the specific problem. Validate frustration without admitting liability. State exact next step and timeline. Close warmly. 80-130 words.",
   "tasks": [
-    {"title": "action verb + specific task", "assigned_to": "role", "due_in_hours": number, "priority": "urgent|high|normal"},
-    {"title": "...", "assigned_to": "...", "due_in_hours": number, "priority": "..."}
+    {"title": "action verb + specific task", "assigned_to": "role", "due_in_hours": number, "priority": "urgent|high|normal"}
   ],
   "crm_note": "1-sentence CRM record update",
   "sheet_row": "customer | issue_category | urgency | sentiment_score | recommended_action"
 }`;
 
 export default async function handler(req) {
-  // Handle Preflight CORS 
   if (req.method === 'OPTIONS') {
     return new Response('OK', {
       status: 200,
@@ -65,86 +63,57 @@ export default async function handler(req) {
     });
   }
 
-  if (!complaint.trim()) {
-    return new Response(JSON.stringify({ error: 'Missing complaint text' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
-  }
-
   const apiKey = process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: 'Server configuration error: API key missing.' }),
+      JSON.stringify({ error: 'Server error: API key missing in Vercel Environment.' }),
       { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
 
   try {
-    const targetUrl = `[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$){apiKey}`;
+    // Switching to stable 1.5-flash to ensure global region compatibility
+    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(targetUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint.trim()}`
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          responseMimeType: "application/json"
-        }
+        contents: [{
+          parts: [{
+            text: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint.trim()}`
+          }]
+        }],
+        generationConfig: { responseMimeType: "application/json" }
       }),
     });
 
     const resData = await response.json();
 
     if (!response.ok) {
+      // 🔥 EXPOSE GOOGLE'S EXACT ERROR MESSAGE TO THE SCREEN
+      const googleErrorReason = resData.error?.message || JSON.stringify(resData);
       return new Response(
-        JSON.stringify({ error: 'Gemini API exception', detail: resData }),
+        JSON.stringify({ error: `Google Rejected This Key: ${googleErrorReason}` }),
         { status: response.status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    let textOutput = "";
-    try {
-      textOutput = resData.candidates[0].content.parts[0].text.trim();
-    } catch (e) {
-      return new Response(
-        JSON.stringify({ error: 'Malformed response structure text mapping', detail: resData }),
-        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-      );
-    }
+    let textOutput = resData.candidates[0].content.parts[0].text.trim();
 
-    // 🔥 VITAL STEP: Strip out any markdown backticks that cause parsing crashes
     if (textOutput.startsWith("```")) {
-      textOutput = textOutput.replace(/^
-```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
+      textOutput = textOutput.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
     }
 
-    // Safely parse it down into a clean javascript data object
-    const parsedDataContent = JSON.parse(textOutput);
-
-    return new Response(JSON.stringify(parsedDataContent), {
+    return new Response(JSON.stringify(JSON.parse(textOutput)), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: 'Internal edge exception loop tracking', detail: err.message }),
+      JSON.stringify({ error: 'Edge exception', detail: err.message }),
       { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
 }
-  
