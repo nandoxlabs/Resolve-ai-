@@ -51,7 +51,7 @@ export default async function handler(req) {
 
   let channel = 'support_ticket';
   let complaint = '';
-  
+
   try {
     const body = await req.json();
     channel = body.channel || 'support_ticket';
@@ -59,7 +59,14 @@ export default async function handler(req) {
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Failed to parse JSON body' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
+  }
+
+  if (!complaint.trim()) {
+    return new Response(JSON.stringify({ error: 'Complaint text is required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 
@@ -72,7 +79,7 @@ export default async function handler(req) {
   }
 
   try {
-    // ✅ FIXED: Changed v1beta → v1 and gemini-1.5-flash → gemini-1.5-flash-latest
+    // ✅ FIXED: v1 stable API + gemini-1.5-flash-latest
     const targetUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     const response = await fetch(targetUrl, {
@@ -84,7 +91,11 @@ export default async function handler(req) {
             text: `${SYSTEM_PROMPT}\n\n[DATA TO PROCESS]:\nSource channel: ${channel}\nComplaint: ${complaint.trim()}`
           }]
         }],
-        generationConfig: { responseMimeType: "application/json" }
+        // ✅ FIXED: Removed responseMimeType (not supported in v1)
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 2048,
+        }
       }),
     });
 
@@ -93,26 +104,19 @@ export default async function handler(req) {
     if (!response.ok) {
       const googleErrorReason = resData.error?.message || JSON.stringify(resData);
       return new Response(
-        JSON.stringify({ error: `Google Rejected This Key: ${googleErrorReason}` }),
+        JSON.stringify({ error: `API Error: ${googleErrorReason}` }),
         { status: response.status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    let textOutput = resData.candidates[0].content.parts[0].text.trim();
+    // ✅ Safely extract text output
+    const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (textOutput.startsWith("```")) {
-      textOutput = textOutput.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
+    if (!rawText) {
+      return new Response(
+        JSON.stringify({ error: 'No response from Gemini', raw: resData }),
+        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
     }
 
-    return new Response(JSON.stringify(JSON.parse(textOutput)), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
-
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: 'Edge exception', detail: err.message }),
-      { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-    );
-  }
-        }
+    // ✅ Strip markdown code fences
