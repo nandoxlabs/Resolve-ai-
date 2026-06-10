@@ -2,32 +2,7 @@ export const config = {
   runtime: 'edge',
 };
 
-const SYSTEM_PROMPT = `You are ResolveAI, an expert complaint intelligence engine. Analyze the customer complaint and return a structured JSON object according to the exact schema. Do not include conversational text outside the JSON.
-
-Return this exact structure:
-{
-  "customer_name": "string or UNKNOWN",
-  "source_channel": "gmail|whatsapp|google_review|support_ticket|other",
-  "issue_category": "billing|delivery|product_quality|staff|refund|technical|safety|legal|other",
-  "issue_subcategory": "specific detail in 4-6 words",
-  "sentiment_score": number between -1.0 and 1.0,
-  "urgency_level": "low|medium|high|critical",
-  "desired_resolution": "what customer wants in 1 sentence",
-  "legal_threat_detected": true or false,
-  "viral_risk_detected": true or false,
-  "safety_concern_detected": true or false,
-  "vip_flag": false,
-  "summary": "2-sentence plain English summary",
-  "recommended_action": "immediate specific action in 1 sentence",
-  "assign_to": "Support Team|Manager|Legal|Finance|CEO",
-  "resolve_by_hours": number,
-  "draft_response": "A complete, warm, professional, personalized reply. Open by acknowledging the specific problem. Validate frustration without admitting liability. State exact next step and timeline. Close warmly. 80-130 words.",
-  "tasks": [
-    {"title": "action verb + specific task", "assigned_to": "role", "due_in_hours": number, "priority": "urgent|high|normal"}
-  ],
-  "crm_note": "1-sentence CRM record update",
-  "sheet_row": "customer | issue_category | urgency | sentiment_score | recommended_action"
-}`;
+const SYSTEM_PROMPT = `You are ResolveAI, an expert complaint intelligence engine. Analyze the customer complaint and generate data strictly matching the requested JSON structure schema.`;
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') {
@@ -92,7 +67,51 @@ export default async function handler(req) {
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 2048,
-          responseMimeType: "application/json"
+          responseMimeType: "application/json",
+          // Force Structured JSON constraints at the schema engine level
+          responseSchema: {
+            type: "object",
+            properties: {
+              customer_name: { type: "string" },
+              source_channel: { type: "string", enum: ["gmail", "whatsapp", "google_review", "support_ticket", "other"] },
+              issue_category: { type: "string", enum: ["billing", "delivery", "product_quality", "staff", "refund", "technical", "safety", "legal", "other"] },
+              issue_subcategory: { type: "string", description: "specific detail in 4-6 words" },
+              sentiment_score: { type: "number", description: "between -1.0 and 1.0" },
+              urgency_level: { type: "string", enum: ["low", "medium", "high", "critical"] },
+              desired_resolution: { type: "string", description: "what customer wants in 1 sentence" },
+              legal_threat_detected: { type: "boolean" },
+              viral_risk_detected: { type: "boolean" },
+              safety_concern_detected: { type: "boolean" },
+              vip_flag: { type: "boolean" },
+              summary: { type: "string", description: "2-sentence plain English summary" },
+              recommended_action: { type: "string", description: "immediate specific action in 1 sentence" },
+              assign_to: { type: "string", enum: ["Support Team", "Manager", "Legal", "Finance", "CEO"] },
+              resolve_by_hours: { type: "number" },
+              draft_response: { type: "string", description: "A complete, warm, professional, personalized reply. 80-130 words." },
+              tasks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string", description: "action verb + specific task" },
+                    assigned_to: { type: "string" },
+                    due_in_hours: { type: "number" },
+                    priority: { type: "string", enum: ["urgent", "high", "normal"] }
+                  },
+                  required: ["title", "assigned_to", "due_in_hours", "priority"]
+                }
+              },
+              crm_note: { type: "string", description: "1-sentence CRM record update" },
+              sheet_row: { type: "string", description: "customer | issue_category | urgency | sentiment_score | recommended_action" }
+            },
+            required: [
+              "customer_name", "source_channel", "issue_category", "issue_subcategory", 
+              "sentiment_score", "urgency_level", "desired_resolution", "legal_threat_detected", 
+              "viral_risk_detected", "safety_concern_detected", "vip_flag", "summary", 
+              "recommended_action", "assign_to", "resolve_by_hours", "draft_response", 
+              "tasks", "crm_note", "sheet_row"
+            ]
+          }
         }
       }),
     });
@@ -116,33 +135,13 @@ export default async function handler(req) {
       );
     }
 
-    let cleanText = rawText.trim();
-    
-    // 1. Remove markdown syntax if it accidentally managed to clip through
-    if (cleanText.startsWith('```')) {
-      cleanText = cleanText
-        .replace(/^```json/, '')
-        .replace(/^```/, '')
-        .replace(/```$/, '')
-        .trim();
-    }
-
-    // 2. ✅ FIX: Sanitize control characters (unescaped line breaks, tabs) that crash JSON.parse
-    cleanText = cleanText
-      .replace(/[\u0000-\u001F\u007F-\u009F]/g, (match) => {
-        if (match === '\n') return '\\n';
-        if (match === '\r') return '\\r';
-        if (match === '\t') return '\\t';
-        return '';
-      });
-
+    // Since responseSchema mathematically guarantees layout adherence, directly parse it.
     let parsed;
     try {
-      parsed = JSON.parse(cleanText);
+      parsed = JSON.parse(rawText.trim());
     } catch (parseErr) {
-      // If it still fails, send the raw text to your frontend to see exactly what Gemini returned
       return new Response(
-        JSON.stringify({ error: `JSON Parse Crash: ${parseErr.message}`, raw: cleanText }),
+        JSON.stringify({ error: `JSON Parse Crash: ${parseErr.message}`, raw: rawText }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
@@ -158,5 +157,5 @@ export default async function handler(req) {
       { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
-}
-  
+                                        }
+      
