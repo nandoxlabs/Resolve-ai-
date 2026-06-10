@@ -2,7 +2,7 @@ export const config = {
   runtime: 'edge',
 };
 
-const SYSTEM_PROMPT = `You are ResolveAI, an expert complaint intelligence engine. Analyze the customer complaint and generate data strictly matching the requested JSON structure schema.`;
+const SYSTEM_PROMPT = `You are ResolveAI, an expert complaint intelligence engine. Analyze the customer complaint and generate data strictly matching the requested JSON structure schema. Make sure numeric values are returned as real numbers, and flags are boolean true/false.`;
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') {
@@ -68,41 +68,40 @@ export default async function handler(req) {
           temperature: 0.1,
           maxOutputTokens: 2048,
           responseMimeType: "application/json",
-          // Force Structured JSON constraints at the schema engine level
           responseSchema: {
             type: "object",
             properties: {
               customer_name: { type: "string" },
-              source_channel: { type: "string", enum: ["gmail", "whatsapp", "google_review", "support_ticket", "other"] },
-              issue_category: { type: "string", enum: ["billing", "delivery", "product_quality", "staff", "refund", "technical", "safety", "legal", "other"] },
-              issue_subcategory: { type: "string", description: "specific detail in 4-6 words" },
-              sentiment_score: { type: "number", description: "between -1.0 and 1.0" },
-              urgency_level: { type: "string", enum: ["low", "medium", "high", "critical"] },
-              desired_resolution: { type: "string", description: "what customer wants in 1 sentence" },
+              source_channel: { type: "string" },
+              issue_category: { type: "string" },
+              issue_subcategory: { type: "string" },
+              sentiment_score: { type: "number" },
+              urgency_level: { type: "string" },
+              desired_resolution: { type: "string" },
               legal_threat_detected: { type: "boolean" },
               viral_risk_detected: { type: "boolean" },
               safety_concern_detected: { type: "boolean" },
               vip_flag: { type: "boolean" },
-              summary: { type: "string", description: "2-sentence plain English summary" },
-              recommended_action: { type: "string", description: "immediate specific action in 1 sentence" },
-              assign_to: { type: "string", enum: ["Support Team", "Manager", "Legal", "Finance", "CEO"] },
+              summary: { type: "string" },
+              recommended_action: { type: "string" },
+              assign_to: { type: "string" },
               resolve_by_hours: { type: "number" },
-              draft_response: { type: "string", description: "A complete, warm, professional, personalized reply. 80-130 words." },
+              draft_response: { type: "string" },
               tasks: {
                 type: "array",
                 items: {
                   type: "object",
                   properties: {
-                    title: { type: "string", description: "action verb + specific task" },
+                    title: { type: "string" },
                     assigned_to: { type: "string" },
                     due_in_hours: { type: "number" },
-                    priority: { type: "string", enum: ["urgent", "high", "normal"] }
+                    priority: { type: "string" }
                   },
                   required: ["title", "assigned_to", "due_in_hours", "priority"]
                 }
               },
-              crm_note: { type: "string", description: "1-sentence CRM record update" },
-              sheet_row: { type: "string", description: "customer | issue_category | urgency | sentiment_score | recommended_action" }
+              crm_note: { type: "string" },
+              sheet_row: { type: "string" }
             },
             required: [
               "customer_name", "source_channel", "issue_category", "issue_subcategory", 
@@ -130,21 +129,12 @@ export default async function handler(req) {
 
     if (!rawText) {
       return new Response(
-        JSON.stringify({ error: 'No response from Gemini', raw: resData }),
+        JSON.stringify({ error: 'No response from Gemini' }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    // Since responseSchema mathematically guarantees layout adherence, directly parse it.
-    let parsed;
-    try {
-      parsed = JSON.parse(rawText.trim());
-    } catch (parseErr) {
-      return new Response(
-        JSON.stringify({ error: `JSON Parse Crash: ${parseErr.message}`, raw: rawText }),
-        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-      );
-    }
+    const parsed = JSON.parse(rawText.trim());
 
     return new Response(JSON.stringify(parsed), {
       status: 200,
@@ -157,5 +147,5 @@ export default async function handler(req) {
       { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
-                                        }
-      
+}
+  
