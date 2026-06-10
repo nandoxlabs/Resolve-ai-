@@ -2,7 +2,7 @@ export const config = {
   runtime: 'edge',
 };
 
-const SYSTEM_PROMPT = `You are ResolveAI, an expert complaint intelligence engine. Analyze the customer complaint and return ONLY a valid JSON object — no markdown, no backticks, no markdown code block formatting, no explanation, just pure JSON data.
+const SYSTEM_PROMPT = `You are ResolveAI, an expert complaint intelligence engine. Analyze the customer complaint and return a structured JSON object according to the exact schema. Do not include conversational text outside the JSON.
 
 Return this exact structure:
 {
@@ -78,7 +78,6 @@ export default async function handler(req) {
   }
 
   try {
-    // ✅ FIXED: gemini-3.5-flash is the current working model (1.5 and 2.0 shut down June 2026)
     const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(targetUrl, {
@@ -93,6 +92,7 @@ export default async function handler(req) {
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 2048,
+          responseMimeType: "application/json" // 👈 FORCES GEMINI TO RETURN CLEAN JSON ONLY
         }
       }),
     });
@@ -117,6 +117,7 @@ export default async function handler(req) {
     }
 
     let cleanText = rawText.trim();
+    // Fallback normalization logic just in case markdown trickles down
     if (cleanText.startsWith('```')) {
       cleanText = cleanText
         .replace(/^```json/, '')
@@ -147,3 +148,4 @@ export default async function handler(req) {
     );
   }
       }
+      
