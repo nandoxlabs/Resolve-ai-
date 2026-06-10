@@ -92,7 +92,7 @@ export default async function handler(req) {
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 2048,
-          responseMimeType: "application/json" // 👈 FORCES GEMINI TO RETURN CLEAN JSON ONLY
+          responseMimeType: "application/json"
         }
       }),
     });
@@ -117,7 +117,8 @@ export default async function handler(req) {
     }
 
     let cleanText = rawText.trim();
-    // Fallback normalization logic just in case markdown trickles down
+    
+    // 1. Remove markdown syntax if it accidentally managed to clip through
     if (cleanText.startsWith('```')) {
       cleanText = cleanText
         .replace(/^```json/, '')
@@ -126,12 +127,22 @@ export default async function handler(req) {
         .trim();
     }
 
+    // 2. ✅ FIX: Sanitize control characters (unescaped line breaks, tabs) that crash JSON.parse
+    cleanText = cleanText
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, (match) => {
+        if (match === '\n') return '\\n';
+        if (match === '\r') return '\\r';
+        if (match === '\t') return '\\t';
+        return '';
+      });
+
     let parsed;
     try {
       parsed = JSON.parse(cleanText);
     } catch (parseErr) {
+      // If it still fails, send the raw text to your frontend to see exactly what Gemini returned
       return new Response(
-        JSON.stringify({ error: 'Failed to parse Gemini response as JSON', raw: cleanText }),
+        JSON.stringify({ error: `JSON Parse Crash: ${parseErr.message}`, raw: cleanText }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
@@ -147,5 +158,5 @@ export default async function handler(req) {
       { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
-      }
-      
+}
+  
