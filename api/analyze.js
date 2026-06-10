@@ -21,9 +21,9 @@ Return this exact structure:
   "recommended_action": "immediate specific action in 1 sentence",
   "assign_to": "Support Team|Manager|Legal|Finance|CEO",
   "resolve_by_hours": number,
-  "draft_response": "80-130 word warm professional reply",
+  "draft_response": "A complete, warm, professional, personalized reply. Open by acknowledging the specific problem. Validate frustration without admitting liability. State exact next step and timeline. Close warmly. 80-130 words.",
   "tasks": [
-    {"title": "task title", "assigned_to": "role", "due_in_hours": 24, "priority": "urgent|high|normal"}
+    {"title": "action verb + specific task", "assigned_to": "role", "due_in_hours": number, "priority": "urgent|high|normal"}
   ],
   "crm_note": "1-sentence CRM record update",
   "sheet_row": "customer | issue_category | urgency | sentiment_score | recommended_action"
@@ -78,7 +78,8 @@ export default async function handler(req) {
   }
 
   try {
-    const targetUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // ✅ FIXED: gemini-3.5-flash is the current working model (1.5 and 2.0 shut down June 2026)
+    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(targetUrl, {
       method: 'POST',
@@ -145,4 +146,4 @@ export default async function handler(req) {
       { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
-}
+      }
