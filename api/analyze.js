@@ -53,14 +53,18 @@ export default async function handler(req) {
   }
 
   try {
-    // ✅ gemini-3.5-flash is now GA (Gemini 3.x series). Per Google's
-    // guidance for 3.x models, avoid overriding temperature/top_p/top_k
-    // from their defaults — Gemini 3's reasoning is tuned for them.
-    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+    // Using gemini-2.0-flash: a stable, widely-available model that
+    // definitely supports generateContent + responseSchema. Avoids any
+    // uncertainty around newer model names/configs causing hangs.
+    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         contents: [{
           parts: [{
@@ -68,11 +72,8 @@ export default async function handler(req) {
           }]
         }],
         generationConfig: {
-          // Gemini 3.x models think by default, which consumes part of
-          // maxOutputTokens. Raise the cap and use a low thinking level
-          // since this is a structured-extraction task, not deep reasoning.
-          maxOutputTokens: 4096,
-          thinkingConfig: { thinkingLevel: "low" },
+          temperature: 0.1,
+          maxOutputTokens: 2048,
           responseMimeType: "application/json",
           responseSchema: {
             type: "object",
@@ -122,6 +123,7 @@ export default async function handler(req) {
     });
 
     const resData = await response.json();
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const googleErrorReason = resData.error?.message || JSON.stringify(resData);
@@ -159,10 +161,14 @@ export default async function handler(req) {
     });
 
   } catch (err) {
+    const isTimeout = err.name === 'AbortError';
     return new Response(
-      JSON.stringify({ error: 'Edge exception', detail: err.message }),
+      JSON.stringify({
+        error: isTimeout ? 'Request to Gemini API timed out after 25s' : 'Edge exception',
+        detail: { name: err.name, message: err.message, stack: err.stack }
+      }),
       { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     );
   }
-}
-  
+        }
+      
