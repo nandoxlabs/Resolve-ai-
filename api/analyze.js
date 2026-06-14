@@ -53,6 +53,9 @@ export default async function handler(req) {
   }
 
   try {
+    // ✅ gemini-3.5-flash is now GA (Gemini 3.x series). Per Google's
+    // guidance for 3.x models, avoid overriding temperature/top_p/top_k
+    // from their defaults — Gemini 3's reasoning is tuned for them.
     const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(targetUrl, {
@@ -65,8 +68,11 @@ export default async function handler(req) {
           }]
         }],
         generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 2048,
+          // Gemini 3.x models think by default, which consumes part of
+          // maxOutputTokens. Raise the cap and use a low thinking level
+          // since this is a structured-extraction task, not deep reasoning.
+          maxOutputTokens: 4096,
+          thinkingConfig: { thinkingLevel: "low" },
           responseMimeType: "application/json",
           responseSchema: {
             type: "object",
@@ -104,10 +110,10 @@ export default async function handler(req) {
               sheet_row: { type: "string" }
             },
             required: [
-              "customer_name", "source_channel", "issue_category", "issue_subcategory", 
-              "sentiment_score", "urgency_level", "desired_resolution", "legal_threat_detected", 
-              "viral_risk_detected", "safety_concern_detected", "vip_flag", "summary", 
-              "recommended_action", "assign_to", "resolve_by_hours", "draft_response", 
+              "customer_name", "source_channel", "issue_category", "issue_subcategory",
+              "sentiment_score", "urgency_level", "desired_resolution", "legal_threat_detected",
+              "viral_risk_detected", "safety_concern_detected", "vip_flag", "summary",
+              "recommended_action", "assign_to", "resolve_by_hours", "draft_response",
               "tasks", "crm_note", "sheet_row"
             ]
           }
@@ -128,13 +134,24 @@ export default async function handler(req) {
     const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!rawText) {
+      // ✅ Surface why Gemini returned no text (e.g. blocked by safety
+      // filters / finishReason) instead of a generic message.
+      const finishReason = resData?.candidates?.[0]?.finishReason || 'unknown';
       return new Response(
-        JSON.stringify({ error: 'No response from Gemini' }),
+        JSON.stringify({ error: `No response from Gemini (finishReason: ${finishReason})`, detail: resData }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    const parsed = JSON.parse(rawText.trim());
+    let parsed;
+    try {
+      parsed = JSON.parse(rawText.trim());
+    } catch (parseErr) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to parse Gemini JSON output', detail: rawText }),
+        { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
 
     return new Response(JSON.stringify(parsed), {
       status: 200,
