@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resolve AI — Admin</title>
+<style>
+  body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
+    background:#06080b;color:#eae6de;font-family:-apple-system,sans-serif}
+  .box{width:320px;padding:32px;background:#0d1117;border:1px solid rgba(255,255,255,0.08)}
+  h1{font-size:16px;letter-spacing:2px;text-transform:uppercase;margin:0 0 20px}
+  input{width:100%;padding:12px;background:#131920;border:1px solid rgba(255,255,255,0.1);
+    color:#eae6de;margin-bottom:12px;font-size:14px;box-sizing:border-box}
+  button{width:100%;padding:12px;background:#d4a843;color:#06080b;border:none;
+    font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-weight:700}
+  button:hover{opacity:.9}
+  .err{color:#e03020;font-size:12px;margin-bottom:12px;display:none}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>Admin Access</h1>
+    <div class="err" id="err">Incorrect password.</div>
+    <input type="password" id="pw" placeholder="Admin password" autofocus>
+    <button onclick="submit()">Enter Dashboard</button>
+  </div>
+<script>
+async function submit() {
+  const password = document.getElementById('pw').value;
+  const res = await fetch('/api/admin-auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password })
+  });
+  if (res.ok) {
+    window.location.href = '/admin.html';
+  } else {
+    document.getElementById('err').style.display = 'block';
+  }
+}
+document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+</script>
+</body>
+</html>
