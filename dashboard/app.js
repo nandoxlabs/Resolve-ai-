@@ -1,64 +1,167 @@
 /**
- * Resolve AI - Complaints Intelligence Logic
+ * Resolve AI - Enterprise Dashboard Master Controller
+ * Combines dynamic UI updates with scalable, professional architecture.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Grab our elements from the HTML
-    const analyzeBtn = document.getElementById('btn-analyze');
-    const complaintInput = document.getElementById('complaint-input');
-    const resultsCard = document.getElementById('ai-results');
-    const executeBtn = document.getElementById('btn-execute');
+// --- 1. STATE MANAGEMENT ---
+// Holds the central "truth" of our dashboard numbers
+const Store = {
+    metrics: { 
+        total: 8, 
+        open: 7, 
+        resolved: 1, 
+        critical: 3, 
+        confidence: 86, 
+        sentiment: "negative" 
+    }
+};
 
-    // 2. Listen for the Analyze Button Click
-    analyzeBtn.addEventListener('click', () => {
-        const text = complaintInput.value.trim();
+// --- 2. AI ENGINE (Mock Service) ---
+// Handles the "thinking" independently of the UI
+const AI_Service = {
+    analyzeText(text) {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                const lowerText = text.toLowerCase();
+                // Flag as critical if it contains high-risk keywords
+                const isCritical = ['refund', 'sue', 'unacceptable', 'lawyer', 'worst'].some(kw => lowerText.includes(kw));
+                
+                resolve({
+                    isCritical,
+                    sentiment: isCritical ? "highly negative" : "neutral/negative",
+                    confidence: isCritical ? 96 : 89
+                });
+            }, 1500); // 1.5s simulation delay
+        });
+    }
+};
+
+// --- 3. UI CONTROLLER ---
+// Strictly handles grabbing elements and updating the screen
+const UI = {
+    elements: {
+        analyzeBtn: document.getElementById('btn-analyze'),
+        inputBox: document.getElementById('complaint-input'),
+        refreshBtn: document.getElementById('btn-refresh'),
+        dropZone: document.querySelector('.upload-dropzone'),
+        // Stat Cards
+        stats: {
+            total: document.getElementById('stat-total'),
+            open: document.getElementById('stat-open'),
+            resolved: document.getElementById('stat-resolved'),
+            critical: document.getElementById('stat-critical'),
+            conf: document.getElementById('stat-conf'),
+            sentiment: document.getElementById('stat-sentiment')
+        }
+    },
+
+    updateDashboard(metrics) {
+        // Safely update all numbers on the screen based on the Store
+        if (this.elements.stats.total) this.elements.stats.total.textContent = metrics.total;
+        if (this.elements.stats.open) this.elements.stats.open.textContent = metrics.open;
+        if (this.elements.stats.resolved) this.elements.stats.resolved.textContent = metrics.resolved;
+        if (this.elements.stats.critical) this.elements.stats.critical.textContent = metrics.critical;
+        if (this.elements.stats.conf) this.elements.stats.conf.textContent = metrics.confidence + "%";
+        if (this.elements.stats.sentiment) this.elements.stats.sentiment.textContent = metrics.sentiment;
+    },
+
+    setLoadingState(isLoading) {
+        if (!this.elements.analyzeBtn) return;
+        this.elements.analyzeBtn.textContent = isLoading ? "Analyzing... (Running Models)" : "Analyze with AI";
+        this.elements.analyzeBtn.disabled = isLoading;
+        this.elements.analyzeBtn.style.opacity = isLoading ? "0.7" : "1";
+    },
+
+    showNotification(message) {
+        // Replaces the basic alert with a cleaner visual prompt
+        alert(`✨ ${message}`);
+    }
+};
+
+// --- 4. MASTER APP ORCHESTRATOR ---
+// Connects the UI, Store, and AI Service together
+const App = {
+    init() {
+        this.bindEvents();
+        UI.updateDashboard(Store.metrics); // Load initial numbers
+    },
+
+    bindEvents() {
+        // Text Area Analysis
+        if (UI.elements.analyzeBtn) {
+            UI.elements.analyzeBtn.addEventListener('click', () => this.processSingleComplaint());
+        }
         
+        // Refresh Button
+        if (UI.elements.refreshBtn) {
+            UI.elements.refreshBtn.addEventListener('click', () => this.resetWorkspace());
+        }
+
+        // Drag & Drop File Upload Zone
+        if (UI.elements.dropZone) {
+            UI.elements.dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                UI.elements.dropZone.style.borderColor = "#6366f1"; // Highlight on hover
+            });
+            UI.elements.dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                UI.elements.dropZone.style.borderColor = "var(--slate-300)"; // Remove highlight
+            });
+            UI.elements.dropZone.addEventListener('drop', (e) => this.processFileUpload(e));
+        }
+    },
+
+    async processSingleComplaint() {
+        const text = UI.elements.inputBox?.value.trim();
         if (!text) {
             alert("Please paste a complaint first!");
             return;
         }
 
-        // Change button to show it's "thinking"
-        analyzeBtn.textContent = "Analyzing... (Running AI Models)";
-        analyzeBtn.disabled = true;
-
-        // 3. Simulate AI Processing Time (1.5 seconds)
-        setTimeout(() => {
-            // Generate mock AI responses based on the length/content of the text
-            const isRefund = text.toLowerCase().includes('charge') || text.toLowerCase().includes('money');
-            
-            // Populate the results card
-            document.getElementById('res-category').textContent = isRefund ? "Billing Error" : "Service Issue";
-            document.getElementById('res-sentiment').textContent = "Highly Negative";
-            
-            document.getElementById('res-summary').textContent = `Customer is expressing severe frustration regarding: "${text.substring(0, 40)}..."`;
-            
-            document.getElementById('res-rootcause').textContent = isRefund ? "System duplicate charge anomaly." : "Communication breakdown in support tier 1.";
-            
-            document.getElementById('res-action').textContent = isRefund ? "Process immediate full refund and send apology template." : "Escalate to Tier 2 support immediately.";
-
-            // Show the results card and reset the button
-            resultsCard.classList.remove('hidden');
-            analyzeBtn.textContent = "Analyze with AI";
-            analyzeBtn.disabled = false;
-
-        }, 1500); // 1.5 second delay
-    });
-
-    // 4. Listen for the Execute Action button
-    executeBtn.addEventListener('click', () => {
-        executeBtn.textContent = "Executing...";
-        executeBtn.disabled = true;
+        UI.setLoadingState(true);
         
+        // Wait for AI to finish analyzing
+        const analysis = await AI_Service.analyzeText(text);
+        
+        // Update our central Store
+        Store.metrics.total++;
+        Store.metrics.open++;
+        if (analysis.isCritical) Store.metrics.critical++;
+        Store.metrics.sentiment = analysis.sentiment;
+        Store.metrics.confidence = analysis.confidence;
+
+        // Push updates to the screen
+        UI.updateDashboard(Store.metrics);
+        UI.elements.inputBox.value = ""; // Clear the box
+        UI.setLoadingState(false);
+        UI.showNotification("AI Analysis Complete! Dashboard metrics updated.");
+    },
+
+    processFileUpload(e) {
+        e.preventDefault();
+        UI.elements.dropZone.style.borderColor = "var(--slate-300)";
+        UI.showNotification("File uploaded! Processing batch analysis...");
+        
+        // Simulate a bulk upload of 12 complaints from a CSV
         setTimeout(() => {
-            alert("Success! Action executed and logged to database.");
+            Store.metrics.total += 12;
+            Store.metrics.open += 10;
+            Store.metrics.resolved += 2;
+            Store.metrics.critical += 4;
             
-            // Reset the form for the next complaint
-            complaintInput.value = "";
-            resultsCard.classList.add('hidden');
-            executeBtn.textContent = "Execute Resolution";
-            executeBtn.disabled = false;
-        }, 800);
-    });
-});
-                
+            UI.updateDashboard(Store.metrics);
+            UI.showNotification("Batch processing complete! 12 new complaints analyzed and categorized.");
+        }, 2000);
+    },
+
+    resetWorkspace() {
+        // Reset the Store to default and refresh UI
+        Store.metrics = { total: 8, open: 7, resolved: 1, critical: 3, confidence: 86, sentiment: "negative" };
+        UI.updateDashboard(Store.metrics);
+        UI.showNotification("Dashboard reset to initial database state.");
+    }
+};
+
+// Boot up the application when the page loads
+document.addEventListener('DOMContentLoaded', () => App.init());
+    
