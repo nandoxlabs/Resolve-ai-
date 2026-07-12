@@ -1,158 +1,50 @@
 <!DOCTYPE html>
-<html lang="en" class="antialiased">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaints Intelligence | Resolve AI</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Complaints Workspace | Resolve AI</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-surface-50 text-slate-900">
-
+<body>
     <div class="app-layout">
-        <nav class="sidebar" aria-label="Main Navigation">
+        <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="logo">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                    <span>Resolve AI</span>
-                </div>
+                <div class="logo">Resolve AI</div>
             </div>
             <ul class="nav-links">
-                <li><a href="#" class="active" aria-current="page">Complaints</a></li>
-                <li><a href="#">Dashboards</a></li>
-                <li><a href="#">Intelligence</a></li>
-                <li><a href="#">Automations</a></li>
-                <li><a href="#">Settings</a></li>
+                <li><a href="complaints.html" class="active">Intelligence Workspace</a></li>
+                <li><a href="admin.html">Admin Settings</a></li>
             </ul>
-        </nav>
+        </aside>
 
         <main class="main-content">
             <header class="top-header">
-                <div class="header-titles">
-                    <h1 class="page-title">Complaint Intelligence</h1>
-                    <span class="last-updated" id="last-updated-text">Updating...</span>
-                </div>
-                <div class="header-actions">
-                    <div class="search-container">
-                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="global-search" placeholder="Search complaints, customers, orders..." aria-label="Search complaints">
-                    </div>
-                    <button id="btn-refresh" class="btn btn-secondary" aria-label="Refresh Data">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                        Refresh
-                    </button>
-                    <button id="btn-export-main" class="btn btn-primary" aria-label="Export Data">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        Export
-                    </button>
-                </div>
+                <h1 class="page-title">Process New Complaint</h1>
             </header>
 
-            <section class="stats-grid" aria-label="Quick Statistics" id="stats-container">
-                </section>
-
-            <section class="filters-panel">
-                <div class="filter-group">
-                    <select id="filter-priority" class="filter-select" aria-label="Filter by Priority">
-                        <option value="">All Priorities</option>
-                        <option value="critical">Critical</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                    </select>
-                    <select id="filter-sentiment" class="filter-select" aria-label="Filter by Sentiment">
-                        <option value="">All Sentiments</option>
-                        <option value="negative">Negative</option>
-                        <option value="neutral">Neutral</option>
-                        <option value="positive">Positive</option>
-                    </select>
-                    <select id="filter-department" class="filter-select" aria-label="Filter by Department">
-                        <option value="">All Departments</option>
-                        </select>
-                    <select id="filter-status" class="filter-select" aria-label="Filter by Status">
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
-                    </select>
+            <div class="workspace-container">
+                <div class="card">
+                    <h3>Paste Customer Complaint</h3>
+                    <textarea id="complaint-input" class="text-input" placeholder="Paste the customer's email or message here..." rows="5"></textarea>
+                    <button id="btn-analyze" class="btn btn-primary" style="margin-top: 16px;">Analyze with AI</button>
                 </div>
-                <div class="sort-group">
-                    <span class="text-sm text-slate-500">Sort by:</span>
-                    <select id="sort-by" class="filter-select" aria-label="Sort Complaints">
-                        <option value="date_desc">Newest First</option>
-                        <option value="date_asc">Oldest First</option>
-                        <option value="priority_desc">Priority (High to Low)</option>
-                        <option value="confidence_desc">AI Confidence</option>
-                    </select>
-                </div>
-            </section>
 
-            <div id="bulk-actions-toolbar" class="bulk-actions hidden" aria-live="polite">
-                <span id="bulk-count-text" class="bulk-count">0 selected</span>
-                <div class="bulk-buttons">
-                    <button class="btn btn-secondary btn-sm" onclick="App.handleBulkAction('assign')">Assign</button>
-                    <button class="btn btn-secondary btn-sm" onclick="App.handleBulkAction('status')">Change Status</button>
-                    <button class="btn btn-secondary btn-sm" onclick="App.handleBulkAction('export')">Export Selected</button>
-                    <button class="btn btn-danger btn-sm" onclick="App.handleBulkAction('delete')">Delete</button>
+                <div id="ai-results" class="card hidden" style="margin-top: 24px; border: 1px solid #0070F3; background-color: #f0f7ff;">
+                    <h3 style="color: #0070F3;">✨ AI Intelligence Report</h3>
+                    <div class="results-grid" style="margin-top: 16px;">
+                        <p><strong>Category:</strong> <span id="res-category" class="badge badge-medium">-</span></p>
+                        <p><strong>Sentiment:</strong> <span id="res-sentiment" class="badge badge-critical">-</span></p>
+                        <p style="margin-top: 12px;"><strong>AI Summary:</strong> <span id="res-summary"></span></p>
+                        <p style="margin-top: 12px;"><strong>Root Cause:</strong> <span id="res-rootcause"></span></p>
+                        <p style="margin-top: 12px;"><strong>Suggested Action:</strong> <span id="res-action"></span></p>
+                    </div>
+                    <button id="btn-execute" class="btn btn-primary" style="margin-top: 20px; width: 100%;">Execute Resolution</button>
                 </div>
             </div>
-
-            <div class="table-wrapper">
-                <table id="complaints-table" class="data-table">
-                    <thead>
-                        <tr>
-                            <th class="col-checkbox"><input type="checkbox" id="select-all" aria-label="Select All"></th>
-                            <th>Customer</th>
-                            <th class="col-wide">Complaint (AI Extracted)</th>
-                            <th>Category</th>
-                            <th>Sentiment</th>
-                            <th>Priority</th>
-                            <th>Department</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>AI Confidence</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        </tbody>
-                </table>
-                
-                <div id="empty-state" class="empty-state hidden">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="text-slate-400 mb-4"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    <h3>No complaints found</h3>
-                    <p>Try adjusting your search or filter criteria.</p>
-                    <button class="btn btn-secondary mt-4" onclick="App.resetFilters()">Clear Filters</button>
-                </div>
-            </div>
-
-            <footer class="pagination-container">
-                <div class="pagination-info" id="pagination-info">Showing 0 to 0 of 0 results</div>
-                <div class="pagination-controls">
-                    <button id="btn-prev-page" class="btn btn-secondary" disabled>Previous</button>
-                    <span id="current-page-text" class="current-page">Page 1</span>
-                    <button id="btn-next-page" class="btn btn-secondary" disabled>Next</button>
-                </div>
-            </footer>
         </main>
     </div>
-
-    <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
-    <aside id="complaint-drawer" class="drawer" aria-hidden="true">
-        <div class="drawer-header">
-            <h2 class="drawer-title">Complaint Details</h2>
-            <button id="btn-close-drawer" class="btn-icon" aria-label="Close Details">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-        </div>
-        <div class="drawer-content" id="drawer-content">
-            </div>
-    </aside>
-
-    <div id="toast-container" class="toast-container"></div>
 
     <script src="app.js"></script>
 </body>
 </html>
-
