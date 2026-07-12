@@ -10,46 +10,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+    <link rel="stylesheet" href="assets/global.css">
+
     <style>
+        /* * Note: Once you have fully copied this CSS into assets/global.css, 
+         * you can delete this entire <style> block to make this file even cleaner! 
+         */
         :root {
-            /* Enterprise SaaS Color Palette (Dark Theme) */
             --bg-base: #000000;
             --bg-surface: #0A0A0A;
             --bg-surface-hover: #141414;
             --bg-card: #111111;
-            
             --border-subtle: #222222;
             --border-strong: #333333;
             --border-focus: #5E6AD2;
-            
             --text-primary: #FFFFFF;
             --text-secondary: #888888;
-            --text-tertiary: #555555;
-            
             --brand-primary: #0070F3;
             --brand-primary-hover: #005bb5;
             --brand-glow: rgba(0, 112, 243, 0.4);
-            
-            --status-high: #F31260;
-            --status-high-bg: rgba(243, 18, 96, 0.1);
-            --status-med: #F5A524;
-            --status-med-bg: rgba(245, 165, 36, 0.1);
-            --status-low: #17C964;
-            --status-low-bg: rgba(23, 201, 100, 0.1);
-            
-            --radius-sm: 4px;
             --radius-md: 8px;
-            --radius-lg: 12px;
-            
             --shadow-glow: 0 0 20px var(--brand-glow);
-            --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
-            
             --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
         }
 
-        /* Reset & Base */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background-color: var(--bg-base);
@@ -62,17 +47,12 @@
         a { color: inherit; text-decoration: none; }
         button { cursor: pointer; font-family: inherit; border: none; background: none; }
         
-        /* Layout */
         .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
         .section { padding: 96px 0; }
         
-        /* Typography */
         h1 { font-size: clamp(3rem, 5vw, 5rem); font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 24px; }
-        h2 { font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 16px; }
-        h3 { font-size: 1.25rem; font-weight: 500; margin-bottom: 8px; }
         p.subtitle { font-size: 1.25rem; color: var(--text-secondary); max-width: 600px; margin-bottom: 40px; }
         
-        /* Navbar */
         nav {
             position: fixed; top: 0; width: 100%; z-index: 100;
             background: rgba(0, 0, 0, 0.7);
@@ -85,7 +65,6 @@
         .nav-links { display: flex; gap: 32px; color: var(--text-secondary); font-size: 0.875rem; }
         .nav-links a:hover { color: var(--text-primary); }
         
-        /* Buttons */
         .btn {
             display: inline-flex; align-items: center; justify-content: center;
             padding: 0 24px; height: 48px; border-radius: var(--radius-md);
@@ -98,8 +77,7 @@
         .btn-secondary:hover { background: var(--bg-surface-hover); border-color: var(--border-focus); }
         .btn-sm { height: 32px; padding: 0 16px; font-size: 0.8125rem; }
 
-        /* Hero Section */
-        .hero { padding-top: 160px; text-align: center; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .hero { padding-top: 160px; text-align: center; display: flex; flex-direction: column; align-items: center; position: relative; height: 100vh; justify-content: center; }
         .hero::before {
             content: ''; position: absolute; top: -20%; left: 50%; transform: translateX(-50%);
             width: 800px; height: 800px; background: radial-gradient(circle, rgba(0,112,243,0.15) 0%, rgba(0,0,0,0) 70%);
@@ -107,79 +85,9 @@
         }
         .hero-ctas { display: flex; gap: 16px; justify-content: center; }
 
-        /* App Interface (Upload & Analysis) */
-        .app-container { margin-top: 64px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
-        .app-header { padding: 24px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Upload Area */
-        .upload-zone {
-            padding: 64px 24px; text-align: center; border: 2px dashed var(--border-strong);
-            border-radius: var(--radius-md); margin: 24px; transition: var(--transition);
-            background: var(--bg-surface); cursor: pointer;
-        }
-        .upload-zone.drag-active { border-color: var(--brand-primary); background: rgba(0, 112, 243, 0.05); }
-        .upload-icon { font-size: 32px; margin-bottom: 16px; color: var(--text-secondary); }
-        .upload-text { color: var(--text-secondary); margin-bottom: 16px; font-size: 0.9375rem; }
-        .paste-area { width: calc(100% - 48px); margin: 0 24px 24px; background: var(--bg-base); border: 1px solid var(--border-strong); border-radius: var(--radius-md); color: var(--text-primary); padding: 16px; font-family: var(--font-mono); font-size: 0.875rem; resize: vertical; min-height: 120px; outline: none; }
-        .paste-area:focus { border-color: var(--brand-primary); }
-        
-        /* Dashboard & Intelligence Results */
-        .dashboard { display: none; padding: 24px; background: var(--bg-base); }
-        .dashboard.active { display: block; animation: fadeIn 0.5s ease; }
-        
-        /* Metrics Grid */
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 32px; }
-        .metric-card { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 20px; border-radius: var(--radius-md); }
-        .metric-label { font-size: 0.8125rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .metric-value { font-size: 2rem; font-weight: 600; color: var(--text-primary); }
-        .metric-trend { font-size: 0.8125rem; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
-        .trend-bad { color: var(--status-high); }
-        
-        /* Root Cause Section */
-        .insights-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px; }
-        .insight-panel { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 24px; }
-        .root-cause-item { padding: 16px 0; border-bottom: 1px solid var(--border-subtle); }
-        .root-cause-item:last-child { border-bottom: none; }
-        .rc-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .rc-title { font-weight: 500; font-size: 1rem; }
-        .rc-impact { color: var(--status-high); font-family: var(--font-mono); font-size: 0.875rem; }
-        .rc-recommendation { font-size: 0.875rem; color: var(--text-secondary); background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); margin-top: 8px; border-left: 2px solid var(--brand-primary); }
-
-        /* Data Table */
-        .table-container { overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card); }
-        .table-toolbar { padding: 16px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
-        .search-input { background: var(--bg-base); border: 1px solid var(--border-strong); color: var(--text-primary); padding: 8px 16px; border-radius: var(--radius-sm); font-size: 0.875rem; width: 300px; outline: none; }
-        .search-input:focus { border-color: var(--brand-primary); }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 16px; border-bottom: 1px solid var(--border-subtle); font-size: 0.875rem; }
-        th { color: var(--text-secondary); font-weight: 500; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; background: var(--bg-surface); position: sticky; top: 0; }
-        tr:hover { background: var(--bg-surface); }
-        
-        /* Badges */
-        .badge { padding: 4px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; }
-        .badge-high { background: var(--status-high-bg); color: var(--status-high); border: 1px solid rgba(243, 18, 96, 0.2); }
-        .badge-med { background: var(--status-med-bg); color: var(--status-med); border: 1px solid rgba(245, 165, 36, 0.2); }
-        .badge-low { background: var(--status-low-bg); color: var(--status-low); border: 1px solid rgba(23, 201, 100, 0.2); }
-
-        /* States */
-        .loading-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 10; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .loading-overlay.active { display: flex; }
-        .spinner { width: 40px; height: 40px; border: 3px solid var(--border-strong); border-top-color: var(--brand-primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
-        
-        .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 16px 24px; border-radius: var(--radius-md); box-shadow: var(--shadow-card); transform: translateY(100px); opacity: 0; transition: var(--transition); z-index: 1000; }
-        .toast.show { transform: translateY(0); opacity: 1; }
-        .toast.error { border-color: var(--status-high); }
-
-        /* Utilities */
-        .hidden { display: none !important; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Responsive */
         @media (max-width: 768px) {
             h1 { font-size: 2.5rem; }
             .hero-ctas { flex-direction: column; }
-            .insights-grid { grid-template-columns: 1fr; }
             .nav-links { display: none; }
         }
     </style>
@@ -194,10 +102,9 @@
             </div>
             <div class="nav-links">
                 <a href="#features">Platform</a>
-                <a href="#how-it-works">How it Works</a>
-                <a href="#security">Enterprise Security</a>
+                <a href="dashboard/complaints.html">Dashboard</a> 
             </div>
-            <button class="btn btn-sm btn-secondary">Request Access</button>
+            <a href="auth/login.html" class="btn btn-sm btn-secondary">Request Access</a>
         </div>
     </nav>
 
@@ -206,450 +113,14 @@
             <h1>Turn Customer Complaints<br>Into Executive Intelligence.</h1>
             <p class="subtitle">Stop reading tickets. Resolve AI automatically ingests millions of complaints, detects root causes, calculates revenue impact, and generates strategic executive reports—in seconds.</p>
             <div class="hero-ctas">
-                <a href="#app" class="btn btn-primary">Try Intelligence Engine</a>
+                <a href="dashboard/complaints.html" class="btn btn-primary">Try Intelligence Engine</a>
                 <button class="btn btn-secondary">Book Enterprise Demo</button>
-            </div>
-        </section>
-
-        <section id="app" class="section container">
-            <div class="app-container" style="position: relative;">
-                
-                <div id="loadingOverlay" class="loading-overlay">
-                    <div class="spinner"></div>
-                    <h3 id="loadingText">Ingesting Data...</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 8px;">Running NLP & Sentiment Analysis pipelines</p>
-                </div>
-
-                <div class="app-header">
-                    <h3>Intelligence Pipeline</h3>
-                    <div style="display: flex; gap: 12px;">
-                        <button id="btnGenerateReport" class="btn btn-sm btn-secondary hidden">Export Exec Report</button>
-                        <button id="btnAnalyze" class="btn btn-sm btn-primary">Analyze Data</button>
-                    </div>
-                </div>
-
-                <div id="uploadView">
-                    <div id="dropZone" class="upload-zone">
-                        <div class="upload-icon">📁</div>
-                        <h3>Drag & Drop Files Here</h3>
-                        <p class="upload-text">Supports CSV, TXT, Excel (.xlsx)</p>
-                        <input type="file" id="fileInput" accept=".csv, .txt, .xlsx" class="hidden">
-                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('fileInput').click()">Browse Files</button>
-                    </div>
-                    
-                    <div style="text-align: center; color: var(--text-secondary); margin-bottom: 24px;">OR</div>
-                    
-                    <textarea id="pasteArea" class="paste-area" placeholder="Paste complaints directly here...
-Example format:
-John Doe | The delivery was completely crushed and arrived 3 days late.
-Mary Smith | I tried logging into my account but the app keeps crashing on the payment screen."></textarea>
-                </div>
-
-                <div id="dashboardView" class="dashboard">
-                    
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-label">Total Complaints Analyzed</div>
-                            <div class="metric-value" id="kpiTotal">0</div>
-                            <div class="metric-trend"><span style="color:var(--status-low)">100% processed</span></div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">High Priority Issues</div>
-                            <div class="metric-value" id="kpiHighPriority" style="color: var(--status-high)">0</div>
-                            <div class="metric-trend"><span class="trend-bad">Requires immediate action</span></div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">Est. Revenue at Risk</div>
-                            <div class="metric-value" id="kpiRevenue">$0</div>
-                            <div class="metric-trend">Based on churn probability models</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">Primary Friction Point</div>
-                            <div class="metric-value" id="kpiFriction" style="font-size: 1.5rem;">Analyzing...</div>
-                            <div class="metric-trend">Most affected department</div>
-                        </div>
-                    </div>
-
-                    <div class="insights-grid">
-                        <div class="insight-panel">
-                            <h3 style="margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">Automated Root Cause Detection</h3>
-                            <div id="rootCauseList">
-                                </div>
-                        </div>
-                        <div class="insight-panel">
-                            <h3 style="margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">Department Impact</h3>
-                            <div id="deptImpactList" style="display: flex; flex-direction: column; gap: 16px;">
-                                </div>
-                        </div>
-                    </div>
-
-                    <div class="table-container">
-                        <div class="table-toolbar">
-                            <h3>Raw Intelligence</h3>
-                            <input type="text" id="searchInput" class="search-input" placeholder="Search customer, issue, or department...">
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Customer</th>
-                                    <th>Summary</th>
-                                    <th>Sentiment</th>
-                                    <th>Priority</th>
-                                    <th>Department</th>
-                                    <th>AI Action Plan</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody">
-                                </tbody>
-                        </table>
-                    </div>
-                    
-                </div>
             </div>
         </section>
     </main>
 
-    <div id="toast" class="toast"></div>
+    <script src="assets/main.js"></script>
 
-    <script>
-        /**
-         * Resolve AI - Frontend Engineering Logic
-         * Built with Vanilla JS to maintain zero-dependency enterprise architecture.
-         */
-        
-        const UI = {
-            dropZone: document.getElementById('dropZone'),
-            fileInput: document.getElementById('fileInput'),
-            pasteArea: document.getElementById('pasteArea'),
-            btnAnalyze: document.getElementById('btnAnalyze'),
-            btnExport: document.getElementById('btnGenerateReport'),
-            uploadView: document.getElementById('uploadView'),
-            dashboardView: document.getElementById('dashboardView'),
-            loadingOverlay: document.getElementById('loadingOverlay'),
-            loadingText: document.getElementById('loadingText'),
-            searchInput: document.getElementById('searchInput'),
-            toast: document.getElementById('toast'),
-            
-            // Metrics
-            kpiTotal: document.getElementById('kpiTotal'),
-            kpiHighPriority: document.getElementById('kpiHighPriority'),
-            kpiRevenue: document.getElementById('kpiRevenue'),
-            kpiFriction: document.getElementById('kpiFriction'),
-            rootCauseList: document.getElementById('rootCauseList'),
-            deptImpactList: document.getElementById('deptImpactList'),
-            tableBody: document.getElementById('tableBody'),
-        };
-
-        let rawData = "";
-        let parsedComplaints = [];
-        let aiResultsCache = [];
-
-        // --- Event Listeners: Drag & Drop & Upload ---
-        
-        UI.dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            UI.dropZone.classList.add('drag-active');
-        });
-
-        UI.dropZone.addEventListener('dragleave', () => {
-            UI.dropZone.classList.remove('drag-active');
-        });
-
-        UI.dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            UI.dropZone.classList.remove('drag-active');
-            if (e.dataTransfer.files.length) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        UI.fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                handleFile(e.target.files[0]);
-            }
-        });
-
-        UI.pasteArea.addEventListener('input', (e) => {
-            rawData = e.target.value;
-        });
-
-        // --- File Handling ---
-
-        function handleFile(file) {
-            const validTypes = ['text/csv', 'text/plain', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-            const ext = file.name.split('.').pop().toLowerCase();
-            
-            if (!validTypes.includes(file.type) && !['csv', 'txt', 'xlsx'].includes(ext)) {
-                showToast("Unsupported file format. Please upload CSV, TXT, or Excel.", "error");
-                return;
-            }
-
-            // In a strict pure HTML/JS frontend, XLSX parsing requires an external library (like SheetJS).
-            // For this enterprise demo, we will parse CSV/TXT natively, and simulate reading XLSX to gracefully prompt the user.
-            if (ext === 'xlsx') {
-                showToast("Excel file detected. In a production environment, this is parsed server-side. For this demo, extracting raw text...", "info");
-                // Mock reading for the sake of the demo's UX
-                rawData = "Simulated Excel Row 1 | App crashed\nSimulated Excel Row 2 | Late delivery";
-                UI.pasteArea.value = `[File loaded: ${file.name}]\n` + rawData;
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                rawData = e.target.result;
-                UI.pasteArea.value = `[File loaded: ${file.name}]\n` + rawData.substring(0, 200) + "... (Preview)";
-                showToast("File parsed successfully.");
-            };
-            reader.readAsText(file);
-        }
-
-        // --- API Integration & Orchestration ---
-
-        UI.btnAnalyze.addEventListener('click', async () => {
-            const dataToAnalyze = rawData || UI.pasteArea.value;
-            
-            if (!dataToAnalyze.trim()) {
-                showToast("Please paste complaints or upload a file first.", "error");
-                return;
-            }
-
-            // Step 1: Parse input into array of complaints
-            const lines = dataToAnalyze.split('\n').filter(l => l.trim().length > 0);
-            parsedComplaints = lines.map(line => {
-                // Simple parsing assumption: Name | Complaint or just Complaint
-                const parts = line.split('|');
-                return {
-                    customer: parts.length > 1 ? parts[0].trim() : "Anonymous",
-                    text: parts.length > 1 ? parts.slice(1).join('|').trim() : line.trim()
-                };
-            });
-
-            // Step 2: Call API
-            setLoading(true);
-            try {
-                // REQUIRED STEP: Attempt real fetch request to backend API
-                // (Note: As requested, do not fake AI unless API is unavailable)
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ complaints: parsedComplaints })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
-                }
-
-                const jsonResponse = await response.json();
-                aiResultsCache = jsonResponse.results;
-                renderDashboard(aiResultsCache);
-
-            } catch (error) {
-                console.warn("Backend API unavailable. Falling back to enterprise intelligence simulation engine.", error);
-                
-                // Fallback simulation to maintain functional demo
-                setTimeout(() => {
-                    UI.loadingText.innerText = "Extracting Insights...";
-                    setTimeout(() => {
-                        aiResultsCache = fallbackAISimulation(parsedComplaints);
-                        renderDashboard(aiResultsCache);
-                        setLoading(false);
-                        showToast("Analysis complete (Simulation Mode).");
-                    }, 1500);
-                }, 1000);
-            }
-        });
-
-        // --- Data Rendering ---
-
-        function renderDashboard(results) {
-            UI.uploadView.classList.add('hidden');
-            UI.dashboardView.classList.add('active');
-            UI.btnAnalyze.classList.add('hidden');
-            UI.btnExport.classList.remove('hidden');
-
-            // Calculate KPIs
-            const total = results.length;
-            const highPriority = results.filter(r => r.priority === 'High').length;
-            
-            // Simulated revenue calculation ($500 avg LTV at risk per high priority ticket)
-            const revenueAtRisk = highPriority * 500; 
-
-            // Find top department
-            const depts = results.reduce((acc, curr) => {
-                acc[curr.department] = (acc[curr.department] || 0) + 1;
-                return acc;
-            }, {});
-            const topDept = Object.keys(depts).sort((a,b) => depts[b] - depts[a])[0];
-
-            // Update KPI DOM
-            UI.kpiTotal.innerText = total.toLocaleString();
-            UI.kpiHighPriority.innerText = highPriority.toLocaleString();
-            UI.kpiRevenue.innerText = `$${revenueAtRisk.toLocaleString()}`;
-            UI.kpiFriction.innerText = topDept || "N/A";
-
-            // Render Root Causes (Aggregate simulated)
-            renderRootCauses(results);
-
-            // Render Table
-            renderTable(results);
-        }
-
-        function renderRootCauses(results) {
-            // Aggregate similar categories to form "Root Causes"
-            const causes = {};
-            results.forEach(r => {
-                if(!causes[r.category]) {
-                    causes[r.category] = { count: 0, revenue: 0, actions: new Set() };
-                }
-                causes[r.category].count += 1;
-                if(r.priority === 'High') causes[r.category].revenue += 500;
-                causes[r.category].actions.add(r.suggestedAction);
-            });
-
-            UI.rootCauseList.innerHTML = Object.entries(causes)
-                .sort((a,b) => b[1].count - a[1].count)
-                .slice(0, 4) // Show top 4
-                .map(([cause, data]) => `
-                <div class="root-cause-item">
-                    <div class="rc-header">
-                        <span class="rc-title">${cause}</span>
-                        <span class="rc-impact">Est. Impact: $${data.revenue.toLocaleString()}</span>
-                    </div>
-                    <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 8px;">Affects ${data.count} customers</div>
-                    <div class="rc-recommendation">
-                        <strong>AI Recommendation:</strong> ${Array.from(data.actions)[0]}
-                    </div>
-                </div>
-            `).join('');
-            
-            // Render Department bars
-            const depts = {};
-            results.forEach(r => depts[r.department] = (depts[r.department] || 0) + 1);
-            const maxDept = Math.max(...Object.values(depts));
-            
-            UI.deptImpactList.innerHTML = Object.entries(depts)
-                .sort((a,b) => b[1] - a[1])
-                .map(([dept, count]) => {
-                    const pct = (count / maxDept) * 100;
-                    return `
-                    <div>
-                        <div style="display:flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 4px;">
-                            <span>${dept}</span>
-                            <span>${count} issues</span>
-                        </div>
-                        <div style="width: 100%; height: 6px; background: var(--bg-surface); border-radius: 3px; overflow: hidden;">
-                            <div style="width: ${pct}%; height: 100%; background: var(--brand-primary); border-radius: 3px;"></div>
-                        </div>
-                    </div>
-                `}).join('');
-        }
-
-        function renderTable(data) {
-            UI.tableBody.innerHTML = '';
-            
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                
-                // Priority Badge Class
-                const badgeClass = row.priority === 'High' ? 'badge-high' : 
-                                   row.priority === 'Medium' ? 'badge-med' : 'badge-low';
-
-                tr.innerHTML = `
-                    <td style="font-weight: 500;">${row.customer}</td>
-                    <td>
-                        <div style="font-weight: 500; margin-bottom: 4px;">${row.category}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.8125rem; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${row.originalText}">
-                            "${row.originalText}"
-                        </div>
-                    </td>
-                    <td><span style="color: ${row.sentiment === 'Negative' ? 'var(--status-high)' : 'var(--text-secondary)'}">${row.sentiment}</span></td>
-                    <td><span class="badge ${badgeClass}">${row.priority}</span></td>
-                    <td style="font-family: var(--font-mono); font-size: 0.8125rem;">${row.department}</td>
-                    <td><div style="color: var(--brand-primary); font-size: 0.8125rem;">${row.suggestedAction}</div></td>
-                `;
-                UI.tableBody.appendChild(tr);
-            });
-        }
-
-        // --- Executive Report Generation ---
-        UI.btnExport.addEventListener('click', () => {
-            showToast("Compiling Executive PDF Report...");
-            setTimeout(() => {
-                // Simulate generating a report and downloading
-                const csvContent = "data:text/csv;charset=utf-8," 
-                    + "Customer,Category,Sentiment,Priority,Department,Action\n"
-                    + aiResultsCache.map(e => `${e.customer},${e.category},${e.sentiment},${e.priority},${e.department},${e.suggestedAction}`).join("\n");
-                
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "Resolve_AI_Executive_Report.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showToast("Report exported successfully.");
-            }, 1000);
-        });
-
-        // --- Search / Filter Table ---
-        UI.searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filteredData = aiResultsCache.filter(row => 
-                row.customer.toLowerCase().includes(term) ||
-                row.category.toLowerCase().includes(term) ||
-                row.department.toLowerCase().includes(term) ||
-                row.originalText.toLowerCase().includes(term)
-            );
-            renderTable(filteredData);
-        });
-
-        // --- Utilities & Fallback Logic ---
-
-        function setLoading(isLoading) {
-            if (isLoading) {
-                UI.loadingOverlay.classList.add('active');
-                UI.loadingText.innerText = "Ingesting Data...";
-            } else {
-                UI.loadingOverlay.classList.remove('active');
-            }
-        }
-
-        function showToast(message, type = "success") {
-            UI.toast.innerText = message;
-            UI.toast.className = `toast show ${type === 'error' ? 'error' : ''}`;
-            setTimeout(() => {
-                UI.toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // Fallback NLP Simulation purely for demo purposes if backend API is unreachable
-        function fallbackAISimulation(complaints) {
-            return complaints.map(c => {
-                const text = c.text.toLowerCase();
-                let category = "General Inquiry";
-                let priority = "Low";
-                let dept = "Customer Support";
-                let action = "Monitor";
-
-                if (text.includes('crash') || text.includes('broken') || text.includes('error')) {
-                    category = "Product Failure"; priority = "High"; dept = "Engineering"; action = "Immediate patch required. Rollback recent deploy.";
-                } else if (text.includes('late') || text.includes('damaged') || text.includes('delivery')) {
-                    category = "Logistics Issue"; priority = "Medium"; dept = "Operations"; action = "Review 3PL provider SLA. Issue refund.";
-                } else if (text.includes('refund') || text.includes('charge') || text.includes('money')) {
-                    category = "Billing Dispute"; priority = "High"; dept = "Finance"; action = "Expedite refund process. Audit stripe webhook.";
-                }
-
-                return {
-                    customer: c.customer,
-                    originalText: c.text,
-                    category: category,
-                    sentiment: "Negative", // Assuming all complaints are negative
-                    priority: priority,
-                    department: dept,
-                    suggestedAction: action
-                };
-            });
-        }
-    </script>
 </body>
-</html>
+    </html>
+    
