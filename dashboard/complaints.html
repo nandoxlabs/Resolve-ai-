@@ -1,81 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="antialiased">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaints Workspace | Resolve AI</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Complaints Intelligence | Resolve AI</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="bg-surface-50 text-slate-900">
+
     <div class="app-layout">
-        
-        <aside class="sidebar">
+        <nav class="sidebar" aria-label="Main Navigation">
             <div class="sidebar-header">
-                Resolve AI
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    <span>Resolve AI</span>
+                </div>
             </div>
             <ul class="nav-links">
-                <li><a href="complaints.html" class="active">📊 Workspace</a></li>
-                <li><a href="admin.html">⚙️ Admin Settings</a></li>
-                <li><a href="../index.html">⬅️ Back to Website</a></li>
+                <li><a href="#" class="active" aria-current="page">Complaints</a></li>
+                <li><a href="#">Dashboards</a></li>
+                <li><a href="#">Intelligence</a></li>
+                <li><a href="#">Automations</a></li>
+                <li><a href="#">Settings</a></li>
             </ul>
-        </aside>
+        </nav>
 
         <main class="main-content">
-            <div class="workspace-container">
-                
-                <div class="dashboard-header">
-                    <div>
-                        <h1 class="header-title">Intelligence Workspace</h1>
-                        <p class="header-subtitle">Analyze and resolve complaints instantly.</p>
+            <header class="top-header">
+                <div class="header-titles">
+                    <h1 class="page-title">Complaint Intelligence</h1>
+                    <span class="last-updated" id="last-updated-text">Updating...</span>
+                </div>
+                <div class="header-actions">
+                    <div class="search-container">
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="global-search" placeholder="Search complaints, customers, orders..." aria-label="Search complaints">
                     </div>
-                    <button class="btn-refresh" id="btn-refresh">🔄 Refresh</button>
+                    <button id="btn-refresh" class="btn btn-secondary" aria-label="Refresh Data">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        Refresh
+                    </button>
+                    <button id="btn-export-main" class="btn btn-primary" aria-label="Export Data">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Export
+                    </button>
                 </div>
+            </header>
 
-                <div class="stats-grid">
-                    <div class="stat-box"><span class="stat-label">Total</span><span class="stat-value" id="stat-total">8</span></div>
-                    <div class="stat-box"><span class="stat-label">Open</span><span class="stat-value" id="stat-open">7</span></div>
-                    <div class="stat-box"><span class="stat-label">Resolved</span><span class="stat-value" id="stat-resolved">1</span></div>
-                    <div class="stat-box"><span class="stat-label">Critical</span><span class="stat-value" id="stat-critical">3</span></div>
-                    <div class="stat-box"><span class="stat-label">Confidence</span><span class="stat-value" id="stat-conf">86%</span></div>
-                    <div class="stat-box"><span class="stat-label">Sentiment</span><span class="stat-value" id="stat-sentiment" style="font-size: 18px; line-height: 42px;">negative</span></div>
+            <section class="stats-grid" aria-label="Quick Statistics" id="stats-container">
+                </section>
+
+            <section class="filters-panel">
+                <div class="filter-group">
+                    <select id="filter-priority" class="filter-select" aria-label="Filter by Priority">
+                        <option value="">All Priorities</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <select id="filter-sentiment" class="filter-select" aria-label="Filter by Sentiment">
+                        <option value="">All Sentiments</option>
+                        <option value="negative">Negative</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="positive">Positive</option>
+                    </select>
+                    <select id="filter-department" class="filter-select" aria-label="Filter by Department">
+                        <option value="">All Departments</option>
+                        </select>
+                    <select id="filter-status" class="filter-select" aria-label="Filter by Status">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
                 </div>
-
-                <div class="card">
-                    <h3 class="card-title">Upload & Analyze Complaints</h3>
-                    <p style="margin-bottom: 8px; font-size: 14px; color: var(--slate-600);">Paste customer email, ticket, or complaint text below:</p>
-                    
-                    <textarea class="text-input" id="complaint-input" placeholder="e.g., 'I was overcharged for my subscription and I want a refund right now!'" rows="5"></textarea>
-                    
-                    <button id="btn-analyze" class="btn-primary">Analyze with AI</button>
+                <div class="sort-group">
+                    <span class="text-sm text-slate-500">Sort by:</span>
+                    <select id="sort-by" class="filter-select" aria-label="Sort Complaints">
+                        <option value="date_desc">Newest First</option>
+                        <option value="date_asc">Oldest First</option>
+                        <option value="priority_desc">Priority (High to Low)</option>
+                        <option value="confidence_desc">AI Confidence</option>
+                    </select>
                 </div>
+            </section>
 
-                <div class="card">
-                    <h3 class="card-title">Category Distribution</h3>
-                    <div class="category-list">
-                        <div class="category-item">
-                            <span class="cat-name">Billing</span>
-                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 80%;"></div></div>
-                            <span class="cat-count">2</span>
-                        </div>
-                        <div class="category-item">
-                            <span class="cat-name">Account</span>
-                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 80%;"></div></div>
-                            <span class="cat-count">2</span>
-                        </div>
-                        <div class="category-item">
-                            <span class="cat-name">Delivery</span>
-                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 40%;"></div></div>
-                            <span class="cat-count">1</span>
-                        </div>
-                    </div>
+            <div id="bulk-actions-toolbar" class="bulk-actions hidden" aria-live="polite">
+                <span id="bulk-count-text" class="bulk-count">0 selected</span>
+                <div class="bulk-buttons">
+                    <button class="btn btn-secondary btn-sm" onclick="App.handleBulkAction('assign')">Assign</button>
+                    <button class="btn btn-secondary btn-sm" onclick="App.handleBulkAction('status')">Change Status</button>
+                    <button class="btn btn-secondary btn-sm" onclick="App.handleBulkAction('export')">Export Selected</button>
+                    <button class="btn btn-danger btn-sm" onclick="App.handleBulkAction('delete')">Delete</button>
                 </div>
-
             </div>
-        </main>
 
+            <div class="table-wrapper">
+                <table id="complaints-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="col-checkbox"><input type="checkbox" id="select-all" aria-label="Select All"></th>
+                            <th>Customer</th>
+                            <th class="col-wide">Complaint (AI Extracted)</th>
+                            <th>Category</th>
+                            <th>Sentiment</th>
+                            <th>Priority</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>AI Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        </tbody>
+                </table>
+                
+                <div id="empty-state" class="empty-state hidden">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="text-slate-400 mb-4"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <h3>No complaints found</h3>
+                    <p>Try adjusting your search or filter criteria.</p>
+                    <button class="btn btn-secondary mt-4" onclick="App.resetFilters()">Clear Filters</button>
+                </div>
+            </div>
+
+            <footer class="pagination-container">
+                <div class="pagination-info" id="pagination-info">Showing 0 to 0 of 0 results</div>
+                <div class="pagination-controls">
+                    <button id="btn-prev-page" class="btn btn-secondary" disabled>Previous</button>
+                    <span id="current-page-text" class="current-page">Page 1</span>
+                    <button id="btn-next-page" class="btn btn-secondary" disabled>Next</button>
+                </div>
+            </footer>
+        </main>
     </div>
-    
+
+    <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
+    <aside id="complaint-drawer" class="drawer" aria-hidden="true">
+        <div class="drawer-header">
+            <h2 class="drawer-title">Complaint Details</h2>
+            <button id="btn-close-drawer" class="btn-icon" aria-label="Close Details">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="drawer-content" id="drawer-content">
+            </div>
+    </aside>
+
+    <div id="toast-container" class="toast-container"></div>
+
     <script src="app.js"></script>
 </body>
-                                                                               </html>
+</html>
+
                         
