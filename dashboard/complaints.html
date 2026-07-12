@@ -8,43 +8,74 @@
 </head>
 <body>
     <div class="app-layout">
+        
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="logo">Resolve AI</div>
+                Resolve AI
             </div>
             <ul class="nav-links">
-                <li><a href="complaints.html" class="active">Intelligence Workspace</a></li>
-                <li><a href="admin.html">Admin Settings</a></li>
+                <li><a href="complaints.html" class="active">📊 Workspace</a></li>
+                <li><a href="admin.html">⚙️ Admin Settings</a></li>
+                <li><a href="../index.html">⬅️ Back to Website</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
-            <header class="top-header">
-                <h1 class="page-title">Process New Complaint</h1>
-            </header>
-
             <div class="workspace-container">
-                <div class="card">
-                    <h3>Paste Customer Complaint</h3>
-                    <textarea id="complaint-input" class="text-input" placeholder="Paste the customer's email or message here..." rows="5"></textarea>
-                    <button id="btn-analyze" class="btn btn-primary" style="margin-top: 16px;">Analyze with AI</button>
+                
+                <div class="dashboard-header">
+                    <div>
+                        <h1 class="header-title">Intelligence Workspace</h1>
+                        <p class="header-subtitle">Analyze and resolve complaints instantly.</p>
+                    </div>
+                    <button class="btn-refresh" id="btn-refresh">🔄 Refresh</button>
                 </div>
 
-                <div id="ai-results" class="card hidden" style="margin-top: 24px; border: 1px solid #0070F3; background-color: #f0f7ff;">
-                    <h3 style="color: #0070F3;">✨ AI Intelligence Report</h3>
-                    <div class="results-grid" style="margin-top: 16px;">
-                        <p><strong>Category:</strong> <span id="res-category" class="badge badge-medium">-</span></p>
-                        <p><strong>Sentiment:</strong> <span id="res-sentiment" class="badge badge-critical">-</span></p>
-                        <p style="margin-top: 12px;"><strong>AI Summary:</strong> <span id="res-summary"></span></p>
-                        <p style="margin-top: 12px;"><strong>Root Cause:</strong> <span id="res-rootcause"></span></p>
-                        <p style="margin-top: 12px;"><strong>Suggested Action:</strong> <span id="res-action"></span></p>
-                    </div>
-                    <button id="btn-execute" class="btn btn-primary" style="margin-top: 20px; width: 100%;">Execute Resolution</button>
+                <div class="stats-grid">
+                    <div class="stat-box"><span class="stat-label">Total</span><span class="stat-value" id="stat-total">8</span></div>
+                    <div class="stat-box"><span class="stat-label">Open</span><span class="stat-value" id="stat-open">7</span></div>
+                    <div class="stat-box"><span class="stat-label">Resolved</span><span class="stat-value" id="stat-resolved">1</span></div>
+                    <div class="stat-box"><span class="stat-label">Critical</span><span class="stat-value" id="stat-critical">3</span></div>
+                    <div class="stat-box"><span class="stat-label">Confidence</span><span class="stat-value" id="stat-conf">86%</span></div>
+                    <div class="stat-box"><span class="stat-label">Sentiment</span><span class="stat-value" id="stat-sentiment" style="font-size: 18px; line-height: 42px;">negative</span></div>
                 </div>
+
+                <div class="card">
+                    <h3 class="card-title">Upload & Analyze Complaints</h3>
+                    <p style="margin-bottom: 8px; font-size: 14px; color: var(--slate-600);">Paste customer email, ticket, or complaint text below:</p>
+                    
+                    <textarea class="text-input" id="complaint-input" placeholder="e.g., 'I was overcharged for my subscription and I want a refund right now!'" rows="5"></textarea>
+                    
+                    <button id="btn-analyze" class="btn-primary">Analyze with AI</button>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">Category Distribution</h3>
+                    <div class="category-list">
+                        <div class="category-item">
+                            <span class="cat-name">Billing</span>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 80%;"></div></div>
+                            <span class="cat-count">2</span>
+                        </div>
+                        <div class="category-item">
+                            <span class="cat-name">Account</span>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 80%;"></div></div>
+                            <span class="cat-count">2</span>
+                        </div>
+                        <div class="category-item">
+                            <span class="cat-name">Delivery</span>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 40%;"></div></div>
+                            <span class="cat-count">1</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
-    </div>
 
+    </div>
+    
     <script src="app.js"></script>
 </body>
-</html>
+                                                                               </html>
+                        
