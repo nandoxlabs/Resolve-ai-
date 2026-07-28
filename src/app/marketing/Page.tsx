@@ -18,7 +18,7 @@ export default function MarketingPage() {
 
           <Link href="/" className="flex items-center">
             <Image
-              src="/logos/logo.svg"
+              src="/icons/logo.svg"
               alt="Resolve AI"
               width={150}
               height={40}
