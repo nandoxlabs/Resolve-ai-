@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { supabaseAdmin } from "./src/lib/supabase-server";
 
 // Configuration for public vs restricted routes
 const PUBLIC_AUTH_ROUTES = [
   "/login",
   "/register",
   "/forgot-password",
+  "/api/auth",
 ];
 
 const PROTECTED_ROUTE_PREFIXES = [
@@ -22,51 +23,97 @@ const PROTECTED_ROUTE_PREFIXES = [
   "/billing",
   "/profile",
   "/admin",
+  "/api/analyze",
+  "/api/complaints",
+  "/api/tasks",
 ];
+
+/**
+ * Verify Supabase session from auth cookie.
+ * Returns { user, orgId, error }
+ */
+async function verifySupabaseSession(req: NextRequest) {
+  try {
+    // Get the Supabase session cookie
+    const authCookie = req.cookies.get("sb-auth-token")?.value;
+
+    if (!authCookie) {
+      return { user: null, orgId: null, error: "No session cookie found" };
+    }
+
+    // Verify the session with Supabase Auth
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAdmin.auth.getUser(authCookie);
+
+    if (authError || !user) {
+      return { user: null, orgId: null, error: "Invalid or expired session" };
+    }
+
+    // Get the user's organization from the database
+    const { data: userData, error: dbError } = await supabaseAdmin
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (dbError || !userData) {
+      return { user, orgId: null, error: "User not found in database" };
+    }
+
+    return { user, orgId: userData.organization_id, error: null };
+  } catch (err) {
+    return { user: null, orgId: null, error: (err as Error).message };
+  }
+}
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 1. Fetch JWT token from request cookies
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
-  const isAuthenticated = !!token;
-  const userRole = token?.role as string | undefined;
-
-  // Helper flags
   const isPublicAuthRoute = PUBLIC_AUTH_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
-  
+
   const isProtectedRoute = PROTECTED_ROUTE_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
   );
 
-  const isAdminRoute = pathname.startsWith("/admin");
-
-  // 2. Redirect unauthenticated users trying to access protected routes
-  if (isProtectedRoute && !isAuthenticated) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("callbackUrl", encodeURIComponent(pathname));
-    return NextResponse.redirect(loginUrl);
+  // 1. Allow public auth routes without session check
+  if (isPublicAuthRoute) {
+    // If already authenticated, redirect to dashboard
+    const authCookie = req.cookies.get("sb-auth-token")?.value;
+    if (authCookie && pathname.startsWith("/login")) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    return NextResponse.next();
   }
 
-  // 3. Redirect authenticated users away from public auth pages to dashboard
-  if (isPublicAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+  // 2. For protected routes, verify session server-side
+  if (isProtectedRoute) {
+    const { user, orgId, error } = await verifySupabaseSession(req);
+
+    if (error || !user) {
+      // Unauthenticated or invalid session: redirect to login
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", encodeURIComponent(pathname));
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Session is valid. Continue to the route.
+    // (We could also attach user/orgId to headers for API routes to use)
+    const response = NextResponse.next();
+    response.headers.set("X-User-ID", user.id);
+    if (orgId) {
+      response.headers.set("X-Org-ID", orgId);
+    }
+    return response;
   }
 
-  // 4. Role-Based Access Control (RBAC): Restrict /admin to ADMIN role only
-  if (isAdminRoute && userRole !== "ADMIN") {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
-  // 5. Build response and append security headers
+  // 3. For all other routes, proceed normally
   const response = NextResponse.next();
 
+  // Add security headers
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -85,17 +132,8 @@ export async function middleware(req: NextRequest) {
   return response;
 }
 
-// Ensure middleware only fires on application routes, bypassing static assets & internals
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public asset folders (/icons, /logos, /images)
-     */
     "/((?!_next/static|_next/image|favicon.ico|icons|logos|images).*)",
   ],
 };
-    
